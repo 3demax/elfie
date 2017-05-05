@@ -25,3 +25,7 @@ python2 kbd_flight.py
 Make sure you have switched your controller into analog mode, so that axis produce values between -1.0 and 1.0
 
 Enjoy!
+
+# Acknowledgements
+
+Big thanks to adria.junyent-ferre and his [project on reverse-engineering exactly same drone, but branded by JJRC](https://hackaday.io/project/19680-controlling-a-jjrc-h37-elfie-quad-from-a-pc) 
