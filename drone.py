@@ -11,25 +11,26 @@ class ConnectionError(Exception):
 
 
 # some basic math
-def _denormalise_(value):
+def _denormalize_(value):
     """ converts value from [-1:+1] range to [0:255] """
     return int(round((value + 1.0)*127.5))
 
 
 idle_command = '6680800180008199'.decode('hex')
 
+
 def get_command_string(
         roll=0.0, pitch=0.0, throttle=0.0, yaw=0.0, command=None,
         altitude_hold=True, headless=False
     ):
-    roll = _denormalise_(roll)
-    pitch = _denormalise_(pitch)
+    roll = _denormalize_(roll)
+    pitch = _denormalize_(pitch)
     if not altitude_hold:
         if throttle < 0:
             throttle = 0
         throttle = throttle*2 - 1
-    throttle = _denormalise_(throttle)
-    yaw = _denormalise_(yaw)
+    throttle = _denormalize_(throttle)
+    yaw = _denormalize_(yaw)
     command = {
         None: 0x0,
         'calibrate': '?',

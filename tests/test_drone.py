@@ -9,7 +9,7 @@ import drone
 
 class DroneProtocolMathTestCase(unittest.TestCase):
     def test_denormalization(self):
-        denorm = drone._denormalise_
+        denorm = drone._denormalize_
         self.assertEqual(denorm(-1), 0)
         self.assertEqual(denorm(-0.5), 64)
         self.assertEqual(denorm(0), 128)
