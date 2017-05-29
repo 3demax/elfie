@@ -4,7 +4,10 @@ import sys
 import time
 
 import pygame
-
+try:
+    import curses
+except:
+    curses = False
 # from evdev import InputDevice, list_devices, ecodes
 
 import drone
@@ -28,8 +31,6 @@ DASHBOARD = """
 
 roll:{roll:>3} pitch:{pitch:>3} throttle:{throttle:>3} yaw:{yaw:>3}
 Command for drone: 0x{hex_command}
-
-Status: {status}
 
 Unix time: {unixtime}
 
@@ -70,7 +71,7 @@ def init_screen():
 
 
 def redraw_screen(screen, roll, pitch, throttle, yaw,
-                  pressed=None, drone_command='', status=''):
+                  pressed=None, drone_command=''):
     if pressed is None:
         pressed = []
 
@@ -86,7 +87,6 @@ def redraw_screen(screen, roll, pitch, throttle, yaw,
         'unixtime': time.time(),
         'hex_command': drone_command.encode('hex'),
         'pressed_keys': str([ecodes.KEY[code] for code in pressed]),
-        'status': str(status),
         'roll': roll,
         'pitch': pitch,
         'throttle': throttle,
@@ -149,8 +149,6 @@ def main_loop(drone1, screen=None, kbd=None, joystick=None):
         sys.exit(1)
     try:
         while 1:
-
-            status = 'joystick found'
             roll, pitch, throttle, yaw, commands, pressed = parse_joystick_input(joystick)
 
             max_power = 1.0 if 'force' in commands else MAX_POWER
@@ -181,8 +179,8 @@ def main_loop(drone1, screen=None, kbd=None, joystick=None):
             if screen is not None:
                 redraw_screen(screen,
                               roll, pitch, throttle, yaw,
-                              drone_command='',
-                              pressed=[], status=status)
+                              drone_command=drone_command,
+                              pressed=[])
             clock.tick(20)
     finally:
         drone1.disconnect()
@@ -193,7 +191,6 @@ if __name__ == "__main__":
     drone1 = drone.Drone()
     pygame.init()
     pygame.joystick.init()
-    curses = False
     # if you are running script without TTY, don't install curses in virtualenv
     screen = init_screen() if curses else None
     kbd = None
