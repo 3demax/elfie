@@ -30,12 +30,26 @@ DASHBOARD = """
 
 
 roll:{roll:>3} pitch:{pitch:>3} throttle:{throttle:>3} yaw:{yaw:>3}
+pressed: {pressed_keys}
 Command for drone: 0x{hex_command}
 
 Unix time: {unixtime}
 
 Press Ctrl+C to exit
 """
+
+JOYSTICK = {
+    'BTN_START': 9,
+    'BTN_SELECT': 8,
+    'BTN_L1': 6,
+    'BTN_L2': 4,
+    'BTN_R1': 7,
+    'BTN_R2': 5,
+    'BTN_1': 0,
+    'BTN_2': 1,
+    'BTN_3': 2,
+    'BTN_4': 3,
+}
 
 
 def detect_joystick():
@@ -86,7 +100,7 @@ def redraw_screen(screen, roll, pitch, throttle, yaw,
         'roll_l': int((1-(roll+1)/2.0)*100),
         'unixtime': time.time(),
         'hex_command': drone_command.encode('hex'),
-        'pressed_keys': str([ecodes.KEY[code] for code in pressed]),
+        'pressed_keys': str(pressed),
         'roll': roll,
         'pitch': pitch,
         'throttle': throttle,
@@ -106,29 +120,24 @@ def parse_joystick_input(joystick):
     yaw = 0
     pitch = 0
     roll = 0
-    commands = []
-    pressed = []
+    commands = set()
+    pressed = set()
 
     throttle = -joystick.get_axis(3)
     yaw = joystick.get_axis(0)
     pitch = -joystick.get_axis(4)
     roll = joystick.get_axis(1)
 
-    BTN_START = joystick.get_button(9) == 1
-    BTN_SELECT = joystick.get_button(8) == 1
-    BTN_L1 = joystick.get_button(6) == 1
-    BTN_L2 = joystick.get_button(4) == 1
-    BTN_R1 = joystick.get_button(7) == 1
-    BTN_R2 = joystick.get_button(5) == 1
+    for btn, code in JOYSTICK.items():
+        if joystick.get_button(code) == 1:
+            pressed.add(btn)
 
-    if BTN_START:
-        commands.append('spin_up')
-        pressed.append('BTN_START')
-    if BTN_SELECT:
-        commands.append('shut_off')
-        pressed.append('BTN_SELECT')
-    if BTN_R1 or BTN_R2:
-        commands.append('force')
+    if 'BTN_START' in pressed:
+        commands.add('spin_up')
+    if 'BTN_SELECT' in pressed:
+        commands.add('shut_off')
+    if 'BTN_R1' in pressed or 'BTN_R2' in pressed:
+        commands.add('force')
 
     return roll, pitch, throttle, yaw, commands, pressed
 
@@ -180,7 +189,7 @@ def main_loop(drone1, screen=None, kbd=None, joystick=None):
                 redraw_screen(screen,
                               roll, pitch, throttle, yaw,
                               drone_command=drone_command,
-                              pressed=[])
+                              pressed=pressed)
             clock.tick(20)
     finally:
         drone1.disconnect()
