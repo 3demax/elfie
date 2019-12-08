@@ -38,22 +38,53 @@ Unix time: {unixtime}
 Press Ctrl+C to exit
 """
 
-JOYSTICK = {
-    'BTN_START': 9,
-    'BTN_SELECT': 8,
-    'BTN_L1': 6,
-    'BTN_L2': 4,
-    'BTN_R1': 7,
-    'BTN_R2': 5,
-    'BTN_1': 0,
-    'BTN_2': 1,
-    'BTN_3': 2,
-    'BTN_4': 3,
+SUPPORTED_JOYSTICKS = {
+  'DragonRise Inc.   Generic   USB  Joystick  ': {
+    'buttons': {
+      'BTN_START': 9,
+      'BTN_SELECT': 8,
+      'BTN_L1': 6,
+      'BTN_L2': 4,
+      'BTN_R1': 7,
+      'BTN_R2': 5,
+      'BTN_1': 0,
+      'BTN_2': 1,
+      'BTN_3': 2,
+      'BTN_4': 3,
+    },
+    'axis': {
+      'LEFT_VERTICAL': (3, -1),
+      'LEFT_HORIZONTAL': (0, 1),
+      'RIGHT_VERTICAL': (4, -1),
+      'RIGHT_HORIZONTAL': (1, 1),
+    }
+  },
+  
+  'xiaoji Gamesir-G4s 2.0b': {
+    'buttons': {
+      'BTN_START': 11,
+      'BTN_SELECT': 10,
+      'BTN_L1': 6,
+      'BTN_L2': 8,
+      'BTN_R1': 7,
+      'BTN_R2': 9,
+      'BTN_1': 0,
+      'BTN_2': 1,
+      'BTN_3': 3,
+      'BTN_4': 4,
+    },
+    'axis': {
+      'LEFT_VERTICAL': (1, -1),
+      'LEFT_HORIZONTAL': (0, 1),
+      'RIGHT_VERTICAL': (3, -1),
+      'RIGHT_HORIZONTAL': (2, 1),
+    }
+  },
 }
 
 
 def detect_joystick():
-    sys.stdout.write('joysticks: {}\n'.format(str(pygame.joystick.get_count())))
+    sys.stdout.write('{} joysticks found.\n'.format(str(pygame.joystick.get_count())))
     if pygame.joystick.get_count() > 0:
         j = pygame.joystick.Joystick(0)
         j.init()
@@ -68,7 +99,8 @@ def wait_for_joystick():
         for i in range(joystick_count):
             j = pygame.joystick.Joystick(i)
             j.init()
-            if j.get_name() == 'DragonRise Inc.   Generic   USB  Joystick  ':
+            sys.stdout.write('found joystick "{}"'.format(j.get_name()))
+            if j.get_name() in SUPPORTED_JOYSTICKS.keys():
                 return j
     return None
 
@@ -123,12 +155,16 @@ def parse_joystick_input(joystick):
     commands = set()
     pressed = set()
 
-    throttle = -joystick.get_axis(3)
-    yaw = joystick.get_axis(0)
-    pitch = -joystick.get_axis(4)
-    roll = joystick.get_axis(1)
+    j_settings = SUPPORTED_JOYSTICKS[joystick.get_name()]
 
-    for btn, code in JOYSTICK.items():
+    j_axis = j_settings['axis']
+    throttle = joystick.get_axis(j_axis['LEFT_VERTICAL'][0])*j_axis['LEFT_VERTICAL'][1]
+    yaw = joystick.get_axis(j_axis['LEFT_HORIZONTAL'][0])*j_axis['LEFT_HORIZONTAL'][1]
+    pitch = joystick.get_axis(j_axis['RIGHT_VERTICAL'][0])*j_axis['RIGHT_VERTICAL'][1]
+    roll = joystick.get_axis(j_axis['RIGHT_HORIZONTAL'][0])*j_axis['RIGHT_HORIZONTAL'][1]
+
+    j_buttons = j_settings['buttons']
+    for btn, code in j_buttons.items():
         if joystick.get_button(code) == 1:
             pressed.add(btn)
 
@@ -154,7 +190,7 @@ def main_loop(drone1, screen=None, kbd=None, joystick=None):
     joystick = wait_for_joystick()
     if joystick is None:
         time.sleep(1)
-        sys.stdout.write('Joystick not found, exiting\n')
+        sys.stdout.write('No supported joysticks found, exiting\n')
         sys.exit(1)
     try:
         while 1:
